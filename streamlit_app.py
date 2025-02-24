@@ -26,7 +26,11 @@ with st.form(key='add_plan_form'):
     judul = st.text_input("Judul Plan")
     kelas = st.text_input("Kelas")  # Menggunakan text_input
     jenis_plan = st.selectbox("Jenis Plan", ['Dev', 'QC'])
-    status = st.selectbox("Status", ['Done', 'Revision', 'OK'])
+    
+    # Menambahkan status baru (On Progress dan Not Yet)
+    status_options = ['Done', 'Revision', 'OK', 'On Progress', 'Not Yet']
+    status = st.selectbox("Status", status_options)
+    
     nama_koordinasi = st.text_input("Nama Koordinasi")
     
     submit_button = st.form_submit_button(label="Tambah Plan")
@@ -74,8 +78,17 @@ if edit_id:
     if project_plan:
         edit_judul = st.text_input("Judul Plan", value=project_plan[1])
         edit_kelas = st.text_input("Kelas", value=project_plan[2])  # Menggunakan text_input
+        
+        # Menambahkan pengecekan untuk memastikan nilai status_valid
+        status_options = ['Done', 'Revision', 'OK', 'On Progress', 'Not Yet']
+        status_value = project_plan[4]
+        
+        # Jika nilai project_plan[4] tidak ditemukan, set status_value ke 'Done' atau nilai default lainnya
+        if status_value not in status_options:
+            status_value = 'Done'  # Atau Anda bisa pilih status lain sebagai default
+        
+        edit_status = st.selectbox("Status", status_options, index=status_options.index(status_value))
         edit_jenis_plan = st.selectbox("Jenis Plan", ['Dev', 'QC'], index=['Dev', 'QC'].index(project_plan[3]))
-        edit_status = st.selectbox("Status", ['Done', 'Revision', 'OK'], index=['Done', 'Revision', 'OK'].index(project_plan[4]))
         edit_nama_koordinasi = st.text_input("Nama Koordinasi", value=project_plan[5])
         
         edit_button = st.button("Simpan Perubahan")
@@ -99,4 +112,3 @@ st.download_button(
     file_name='project_plans.csv',
     mime='text/csv'
 )
-
