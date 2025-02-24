@@ -25,7 +25,7 @@ st.title("Project Plan Management Doyahudin")
 
 # Sidebar
 st.sidebar.title("Menu")
-sidebar_option = st.sidebar.radio("", [ 'Lihat Data','Tambah Plan', 'Edit & Hapus Plan', 'Export Data'])
+sidebar_option = st.sidebar.radio("", [ 'Lihat Data','Tambah Plan', 'Edit & Hapus Plan', 'Export Data',"Dashboard"])
 
 # Fungsi untuk menampilkan tabel dengan warna berdasarkan status
 def row_color(status):
@@ -148,3 +148,30 @@ elif sidebar_option == 'Export Data':
         file_name="project_plans.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+elif sidebar_option == 'Dashboard':
+    # Dashboard Persentase Status
+    st.subheader("Dashboard Persentase Status Project Plan")
+
+    # Ambil data dari database
+    c.execute('SELECT status FROM project_plans')
+    data_db = c.fetchall()
+    
+    # Mengubah data menjadi DataFrame
+    status_df = pd.DataFrame(data_db, columns=['Status'])
+
+    # Menghitung persentase setiap status
+    status_counts = status_df['Status'].value_counts()
+    total_count = len(status_df)
+    
+    # Menampilkan persentase status
+    st.write(f"Total Project Plans: {total_count}")
+    st.write("Persentase Status Project Plans:")
+    
+    # Tampilkan persentase untuk setiap status
+    for status, count in status_counts.items():
+        percentage = (count / total_count) * 100
+        st.write(f"{status}: {percentage:.2f}%")
+
+    # Grafik bar persentase status
+    st.bar_chart(status_counts / total_count)
