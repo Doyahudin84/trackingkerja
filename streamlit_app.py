@@ -4,7 +4,6 @@ import sqlite3
 import os
 
 # Membuat koneksi ke database SQLite
-# Pastikan file database tersimpan di direktori yang bisa diakses
 db_path = "project_plans.db"
 conn = sqlite3.connect(db_path)
 c = conn.cursor()
@@ -47,7 +46,26 @@ with st.form(key='add_plan_form'):
 c.execute('SELECT * FROM project_plans')
 data_db = c.fetchall()
 df = pd.DataFrame(data_db, columns=['ID', 'Judul Plan', 'Kelas', 'Jenis Plan', 'Status', 'Nama Koordinasi'])
-st.write(df)
+
+# Menambahkan warna berdasarkan status
+def row_color(status):
+    if status == "Done":
+        return 'background-color: #4CAF50; color: white;'  # Green
+    elif status == "Revision":
+        return 'background-color: #FFEB3B; color: black;'  # Yellow
+    elif status == "OK":
+        return 'background-color: #2196F3; color: white;'  # Blue
+    elif status == "On Progress":
+        return 'background-color: #FF9800; color: white;'  # Orange
+    elif status == "Not Yet":
+        return 'background-color: #f44336; color: white;'  # Red
+    return ''  # Default
+
+# Terapkan warna ke setiap baris
+styled_df = df.style.applymap(lambda status: row_color(status), subset=['Status'])
+
+# Tampilkan tabel dengan warna
+st.write(styled_df)
 
 # Fitur pencarian
 search_term = st.text_input("Cari berdasarkan Judul Plan atau Koordinasi")
@@ -108,7 +126,4 @@ if edit_id:
 csv = df.to_csv(index=False)
 st.download_button(
     label="Download CSV",
-    data=csv,
-    file_name='project_plans.csv',
-    mime='text/csv'
-)
+    da
