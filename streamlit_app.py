@@ -24,7 +24,7 @@ conn.commit()
 st.subheader("Tambah Project Plan Baru")
 with st.form(key='add_plan_form'):
     judul = st.text_input("Judul Plan")
-    kelas = st.selectbox("Kelas", ['Development', 'Quality Control'])
+    kelas = st.text_input("Kelas")
     jenis_plan = st.selectbox("Jenis Plan", ['Dev', 'QC'])
     status = st.selectbox("Status", ['Done', 'Revision', 'OK'])
     nama_koordinasi = st.text_input("Nama Koordinasi")
