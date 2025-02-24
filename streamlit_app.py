@@ -1,9 +1,12 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
+import os
 
 # Membuat koneksi ke database SQLite
-conn = sqlite3.connect('project_plans.db')
+# Pastikan file database tersimpan di direktori yang bisa diakses
+db_path = "project_plans.db"
+conn = sqlite3.connect(db_path)
 c = conn.cursor()
 
 # Membuat tabel jika belum ada
@@ -50,7 +53,11 @@ else:
     filtered_data = df
 st.write(filtered_data)
 
-# Export data ke CSV
-if st.button("Export ke CSV"):
-    df.to_csv('project_plans.csv', index=False)
-    st.success("Data berhasil diexport ke project_plans.csv")
+# Export data ke CSV dengan download button
+csv = df.to_csv(index=False)
+st.download_button(
+    label="Download CSV",
+    data=csv,
+    file_name='project_plans.csv',
+    mime='text/csv'
+)
