@@ -130,3 +130,23 @@ st.download_button(
     file_name='project_plans.csv',
     mime='text/csv'
 )
+
+# Export data ke Excel
+import io
+import openpyxl
+
+# Buat file Excel menggunakan Pandas dan Openpyxl
+excel_file = io.BytesIO()
+with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+    df.to_excel(writer, index=False, sheet_name='Project Plans')
+
+# Kembalikan pointer file ke awal
+excel_file.seek(0)
+
+# Tombol untuk download file Excel
+st.download_button(
+    label="Download Excel",
+    data=excel_file,
+    file_name="project_plans.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
