@@ -4,7 +4,7 @@ import sqlite3
 import os
 import io
 import openpyxl
-import matplotlib.pyplot as plt
+
 
 # Membuat koneksi ke database SQLite
 db_path = "project_plans.db"
