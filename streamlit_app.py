@@ -128,12 +128,12 @@ elif sidebar_option == 'Lihat Data':
     # Fitur pencarian
     search_term = st.text_input("Cari berdasarkan Judul Plan atau Koordinasi")
     if search_term:
-          # Menyaring data berdasarkan input pencarian (judul plan atau koordinasi)
-          filtered_data = df[df['Judul Plan'].str.contains(search_term, case=False) | df['Nama Koordinasi'].str.contains(search_term, case=False)]
+        # Menyaring data berdasarkan input pencarian (judul plan atau koordinasi)
+        filtered_data = df[df['Judul Plan'].str.contains(search_term, case=False) | df['Nama Koordinasi'].str.contains(search_term, case=False)]
         if filtered_data.empty:
-              st.write("Tidak ditemukan data yang sesuai dengan pencarian.")
+            st.write("Tidak ditemukan data yang sesuai dengan pencarian.")
         else:
-              st.write(filtered_data)
+            st.write(filtered_data)
     else:
           st.write(df)
 
