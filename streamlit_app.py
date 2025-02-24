@@ -21,7 +21,7 @@ c.execute('''CREATE TABLE IF NOT EXISTS project_plans (
              )''')
 conn.commit()
 
-st.title("Project Plan Management Doyahudin)
+st.title("Project Plan Management Doyahudin")
 
 # Sidebar
 st.sidebar.title("Menu")
