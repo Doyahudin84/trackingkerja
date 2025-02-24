@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import os
+import io
+import openpyxl
 
 # Membuat koneksi ke database SQLite
 db_path = "project_plans.db"
@@ -19,35 +21,11 @@ c.execute('''CREATE TABLE IF NOT EXISTS project_plans (
              )''')
 conn.commit()
 
-# Form untuk menambah project plan baru
-st.subheader("Tambah Project Plan Baru")
-with st.form(key='add_plan_form'):
-    judul = st.text_input("Judul Plan")
-    kelas = st.text_input("Kelas")  # Menggunakan text_input
-    jenis_plan = st.selectbox("Jenis Plan", ['Dev', 'QC'])
-    
-    # Menambahkan status baru (On Progress dan Not Yet)
-    status_options = ['Done', 'Revision', 'OK', 'On Progress', 'Not Yet']
-    status = st.selectbox("Status", status_options)
-    
-    nama_koordinasi = st.text_input("Nama Koordinasi")
-    
-    submit_button = st.form_submit_button(label="Tambah Plan")
+# Sidebar
+st.sidebar.title("Project Plan Management")
+sidebar_option = st.sidebar.radio("Pilih Opsi", ['Tambah Plan', 'Edit & Hapus Plan', 'Lihat Data', 'Export Data'])
 
-    if submit_button:
-        c.execute('''
-            INSERT INTO project_plans (judul_plan, kelas, jenis_plan, status, nama_koordinasi)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (judul, kelas, jenis_plan, status, nama_koordinasi))
-        conn.commit()
-        st.success("Project plan berhasil ditambahkan!")
-
-# Menampilkan data project plan
-c.execute('SELECT * FROM project_plans')
-data_db = c.fetchall()
-df = pd.DataFrame(data_db, columns=['ID', 'Judul Plan', 'Kelas', 'Jenis Plan', 'Status', 'Nama Koordinasi'])
-
-# Menambahkan warna berdasarkan status
+# Fungsi untuk menampilkan tabel dengan warna berdasarkan status
 def row_color(status):
     if status == "Done":
         return 'background-color: #4CAF50; color: white;'  # Green
@@ -61,92 +39,116 @@ def row_color(status):
         return 'background-color: #f44336; color: white;'  # Red
     return ''  # Default
 
-# Terapkan warna ke setiap baris
-styled_df = df.style.applymap(lambda status: row_color(status), subset=['Status'])
-
-# Tampilkan tabel dengan warna
-st.write(styled_df)
-
-# Fitur pencarian
-search_term = st.text_input("Cari berdasarkan Judul Plan atau Koordinasi")
-if search_term:
-    filtered_data = df[df['Judul Plan'].str.contains(search_term, case=False) | df['Nama Koordinasi'].str.contains(search_term, case=False)]
-else:
-    filtered_data = df
-st.write(filtered_data)
-
-# Fitur Delete (Hapus)
-st.subheader("Hapus Project Plan")
-delete_id = st.number_input("Masukkan ID Project Plan yang ingin dihapus", min_value=1, step=1)
-if st.button("Hapus Project Plan"):
-    if delete_id:
-        c.execute("DELETE FROM project_plans WHERE id=?", (delete_id,))
-        conn.commit()
-        st.success(f"Project plan dengan ID {delete_id} berhasil dihapus!")
-    else:
-        st.error("ID tidak valid!")
-
-# Fitur Edit (Ubah)
-st.subheader("Edit Project Plan")
-edit_id = st.number_input("Masukkan ID Project Plan yang ingin diedit", min_value=1, step=1)
-if edit_id:
-    c.execute("SELECT * FROM project_plans WHERE id=?", (edit_id,))
-    project_plan = c.fetchone()
-    
-    if project_plan:
-        edit_judul = st.text_input("Judul Plan", value=project_plan[1])
-        edit_kelas = st.text_input("Kelas", value=project_plan[2])  # Menggunakan text_input
+# Tampilan berdasarkan opsi sidebar yang dipilih
+if sidebar_option == 'Tambah Plan':
+    st.subheader("Tambah Project Plan Baru")
+    with st.form(key='add_plan_form'):
+        judul = st.text_input("Judul Plan")
+        kelas = st.text_input("Kelas")  # Menggunakan text_input
+        jenis_plan = st.selectbox("Jenis Plan", ['Dev', 'QC'])
         
-        # Menambahkan pengecekan untuk memastikan nilai status_valid
+        # Menambahkan status baru (On Progress dan Not Yet)
         status_options = ['Done', 'Revision', 'OK', 'On Progress', 'Not Yet']
-        status_value = project_plan[4]
+        status = st.selectbox("Status", status_options)
         
-        # Jika nilai project_plan[4] tidak ditemukan, set status_value ke 'Done' atau nilai default lainnya
-        if status_value not in status_options:
-            status_value = 'Done'  # Atau Anda bisa pilih status lain sebagai default
+        nama_koordinasi = st.text_input("Nama Koordinasi")
         
-        edit_status = st.selectbox("Status", status_options, index=status_options.index(status_value))
-        edit_jenis_plan = st.selectbox("Jenis Plan", ['Dev', 'QC'], index=['Dev', 'QC'].index(project_plan[3]))
-        edit_nama_koordinasi = st.text_input("Nama Koordinasi", value=project_plan[5])
-        
-        edit_button = st.button("Simpan Perubahan")
-        
-        if edit_button:
+        submit_button = st.form_submit_button(label="Tambah Plan")
+
+        if submit_button:
             c.execute('''
-                UPDATE project_plans 
-                SET judul_plan = ?, kelas = ?, jenis_plan = ?, status = ?, nama_koordinasi = ?
-                WHERE id = ?
-            ''', (edit_judul, edit_kelas, edit_jenis_plan, edit_status, edit_nama_koordinasi, edit_id))
+                INSERT INTO project_plans (judul_plan, kelas, jenis_plan, status, nama_koordinasi)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (judul, kelas, jenis_plan, status, nama_koordinasi))
             conn.commit()
-            st.success(f"Project plan dengan ID {edit_id} berhasil diperbarui!")
+            st.success("Project plan berhasil ditambahkan!")
+
+elif sidebar_option == 'Edit & Hapus Plan':
+    # Edit dan Hapus Project Plan
+    st.subheader("Edit atau Hapus Project Plan")
+    
+    # Edit
+    edit_id = st.number_input("Masukkan ID Project Plan yang ingin diedit", min_value=1, step=1)
+    if edit_id:
+        c.execute("SELECT * FROM project_plans WHERE id=?", (edit_id,))
+        project_plan = c.fetchone()
+        
+        if project_plan:
+            edit_judul = st.text_input("Judul Plan", value=project_plan[1])
+            edit_kelas = st.text_input("Kelas", value=project_plan[2])  # Menggunakan text_input
+            
+            # Menambahkan pengecekan untuk memastikan nilai status_valid
+            status_options = ['Done', 'Revision', 'OK', 'On Progress', 'Not Yet']
+            status_value = project_plan[4]
+            
+            if status_value not in status_options:
+                status_value = 'Done'
+            
+            edit_status = st.selectbox("Status", status_options, index=status_options.index(status_value))
+            edit_jenis_plan = st.selectbox("Jenis Plan", ['Dev', 'QC'], index=['Dev', 'QC'].index(project_plan[3]))
+            edit_nama_koordinasi = st.text_input("Nama Koordinasi", value=project_plan[5])
+            
+            edit_button = st.button("Simpan Perubahan")
+            
+            if edit_button:
+                c.execute('''
+                    UPDATE project_plans 
+                    SET judul_plan = ?, kelas = ?, jenis_plan = ?, status = ?, nama_koordinasi = ?
+                    WHERE id = ?
+                ''', (edit_judul, edit_kelas, edit_jenis_plan, edit_status, edit_nama_koordinasi, edit_id))
+                conn.commit()
+                st.success(f"Project plan dengan ID {edit_id} berhasil diperbarui!")
+        else:
+            st.error(f"Project plan dengan ID {edit_id} tidak ditemukan!")
+    
+    # Hapus
+    delete_id = st.number_input("Masukkan ID Project Plan yang ingin dihapus", min_value=1, step=1)
+    if st.button("Hapus Project Plan"):
+        if delete_id:
+            c.execute("DELETE FROM project_plans WHERE id=?", (delete_id,))
+            conn.commit()
+            st.success(f"Project plan dengan ID {delete_id} berhasil dihapus!")
+        else:
+            st.error("ID tidak valid!")
+
+elif sidebar_option == 'Lihat Data':
+    # Menampilkan data project plan
+    c.execute('SELECT * FROM project_plans')
+    data_db = c.fetchall()
+    df = pd.DataFrame(data_db, columns=['ID', 'Judul Plan', 'Kelas', 'Jenis Plan', 'Status', 'Nama Koordinasi'])
+
+    # Terapkan warna ke setiap baris berdasarkan status
+    styled_df = df.style.applymap(lambda status: row_color(status), subset=['Status'])
+    
+    # Tampilkan tabel dengan warna
+    st.write(styled_df)
+
+    # Fitur pencarian
+    search_term = st.text_input("Cari berdasarkan Judul Plan atau Koordinasi")
+    if search_term:
+        filtered_data = df[df['Judul Plan'].str.contains(search_term, case=False) | df['Nama Koordinasi'].str.contains(search_term, case=False)]
     else:
-        st.error(f"Project plan dengan ID {edit_id} tidak ditemukan!")
+        filtered_data = df
+    st.write(filtered_data)
 
-# Export data ke CSV dengan download button
-csv = df.to_csv(index=False)
-st.download_button(
-    label="Download CSV",
-    data=csv,
-    file_name='project_plans.csv',
-    mime='text/csv'
-)
+elif sidebar_option == 'Export Data':
+    # Export data ke Excel
+    # Buat file Excel menggunakan Pandas dan Openpyxl
+    c.execute('SELECT * FROM project_plans')
+    data_db = c.fetchall()
+    df = pd.DataFrame(data_db, columns=['ID', 'Judul Plan', 'Kelas', 'Jenis Plan', 'Status', 'Nama Koordinasi'])
 
-# Export data ke Excel
-import io
-import openpyxl
+    excel_file = io.BytesIO()
+    with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Project Plans')
 
-# Buat file Excel menggunakan Pandas dan Openpyxl
-excel_file = io.BytesIO()
-with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-    df.to_excel(writer, index=False, sheet_name='Project Plans')
+    # Kembalikan pointer file ke awal
+    excel_file.seek(0)
 
-# Kembalikan pointer file ke awal
-excel_file.seek(0)
-
-# Tombol untuk download file Excel
-st.download_button(
-    label="Download Excel",
-    data=excel_file,
-    file_name="project_plans.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
+    # Tombol untuk download file Excel
+    st.download_button(
+        label="Download Excel",
+        data=excel_file,
+        file_name="project_plans.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
