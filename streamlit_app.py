@@ -21,8 +21,10 @@ c.execute('''CREATE TABLE IF NOT EXISTS project_plans (
              )''')
 conn.commit()
 
+st.title("Project Plan Management Doyahudin)
+
 # Sidebar
-st.sidebar.title("Project Plan Management")
+st.sidebar.title("Menu")
 sidebar_option = st.sidebar.radio("Pilih Opsi", [ 'Lihat Data','Tambah Plan', 'Edit & Hapus Plan', 'Export Data'])
 
 # Fungsi untuk menampilkan tabel dengan warna berdasarkan status
