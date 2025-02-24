@@ -126,4 +126,7 @@ if edit_id:
 csv = df.to_csv(index=False)
 st.download_button(
     label="Download CSV",
-    da
+    data=csv,
+    file_name='project_plans.csv',
+    mime='text/csv'
+)
