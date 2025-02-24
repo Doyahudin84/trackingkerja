@@ -151,7 +151,7 @@ elif sidebar_option == 'Export Data':
     )
 
 elif sidebar_option == 'Dashboard':
-    # Dashboard Persentase Status Berdasarkan Jenis Plan
+    # Dashboard Persentase Status dan Jenis Plan
     st.subheader("Dashboard Persentase Status Berdasarkan Jenis Plan")
 
     # Ambil data dari database
@@ -161,24 +161,17 @@ elif sidebar_option == 'Dashboard':
     # Mengubah data menjadi DataFrame
     status_jenis_df = pd.DataFrame(data_db, columns=['Status', 'Jenis Plan'])
 
-    # Filter status "OK" dan "Not Yet"
-    status_filter = status_jenis_df[status_jenis_df['Status'].isin(['OK', 'Not Yet'])]
+    # Menghitung persentase setiap status untuk masing-masing jenis plan
+    status_jenis_counts = status_jenis_df.groupby(['Jenis Plan', 'Status']).size().unstack(fill_value=0)
 
-    # Hitung persentase OK dan Not Yet
-    status_counts = status_filter['Status'].value_counts()
-    total = status_counts.sum()
+    # Hitung total per jenis plan
+    total_per_jenis_plan = status_jenis_counts.sum(axis=1)
 
-    # Menghitung persentase
-    status_percentage = (status_counts / total) * 100
+    # Hitung persentase per status untuk tiap jenis plan
+    status_jenis_percentage = status_jenis_counts.divide(total_per_jenis_plan, axis=0) * 100
 
-    # Tampilkan Persentase OK dan Not Yet dalam Pie Chart
-    labels = status_percentage.index
-    sizes = status_percentage.values
-    colors = ['#4CAF50', '#f44336']  # Hijau untuk OK dan Merah untuk Not Yet
+    st.write("Persentase Status Berdasarkan Jenis Plan:")
+    st.write(status_jenis_percentage)
 
-    fig, ax = plt.subplots()
-    ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors)
-    ax.axis('equal')  # Equal aspect ratio ensures that pie chart is drawn as a circle.
-
-    # Tampilkan pie chart
-    st.pyplot(fig)
+    # Grafik bar per status dan jenis plan
+    st.bar_chart(status_jenis_percentage)
