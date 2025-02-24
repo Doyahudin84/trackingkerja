@@ -23,7 +23,7 @@ conn.commit()
 
 # Sidebar
 st.sidebar.title("Project Plan Management")
-sidebar_option = st.sidebar.radio("Pilih Opsi", ['Tambah Plan', 'Edit & Hapus Plan', 'Lihat Data', 'Export Data'])
+sidebar_option = st.sidebar.radio("Pilih Opsi", [ 'Lihat Data','Tambah Plan', 'Edit & Hapus Plan', 'Export Data'])
 
 # Fungsi untuk menampilkan tabel dengan warna berdasarkan status
 def row_color(status):
