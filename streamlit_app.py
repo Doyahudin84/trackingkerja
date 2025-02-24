@@ -25,7 +25,7 @@ st.title("Project Plan Management Doyahudin")
 
 # Sidebar
 st.sidebar.title("Menu")
-sidebar_option = st.sidebar.radio("Pilih Opsi", [ 'Lihat Data','Tambah Plan', 'Edit & Hapus Plan', 'Export Data'])
+sidebar_option = st.sidebar.radio("", [ 'Lihat Data','Tambah Plan', 'Edit & Hapus Plan', 'Export Data'])
 
 # Fungsi untuk menampilkan tabel dengan warna berdasarkan status
 def row_color(status):
