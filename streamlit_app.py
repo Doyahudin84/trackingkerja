@@ -26,7 +26,7 @@ with st.form(key='add_plan_form'):
     judul = st.text_input("Judul Plan")
     kelas = st.text_input("Kelas")
     jenis_plan = st.selectbox("Jenis Plan", ['Dev', 'QC'])
-    status = st.selectbox("Status", ['Done', 'Revision', 'OK'])
+    status = st.selectbox("Status", ['On Progress','','Done', 'Revision', 'OK'])
     nama_koordinasi = st.text_input("Nama Koordinasi")
     
     submit_button = st.form_submit_button(label="Tambah Plan")
