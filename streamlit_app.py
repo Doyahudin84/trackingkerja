@@ -150,28 +150,27 @@ elif sidebar_option == 'Export Data':
     )
 
 elif sidebar_option == 'Dashboard':
-    # Dashboard Persentase Status
-    st.subheader("Dashboard Persentase Status Project Plan")
+    # Dashboard Persentase Status dan Jenis Plan
+    st.subheader("Dashboard Persentase Status Berdasarkan Jenis Plan")
 
     # Ambil data dari database
-    c.execute('SELECT status FROM project_plans')
+    c.execute('SELECT status, jenis_plan FROM project_plans')
     data_db = c.fetchall()
     
     # Mengubah data menjadi DataFrame
-    status_df = pd.DataFrame(data_db, columns=['Status'])
+    status_jenis_df = pd.DataFrame(data_db, columns=['Status', 'Jenis Plan'])
 
-    # Menghitung persentase setiap status
-    status_counts = status_df['Status'].value_counts()
-    total_count = len(status_df)
-    
-    # Menampilkan persentase status
-    st.write(f"Total Project Plans: {total_count}")
-    st.write("Persentase Status Project Plans:")
-    
-    # Tampilkan persentase untuk setiap status
-    for status, count in status_counts.items():
-        percentage = (count / total_count) * 100
-        st.write(f"{status}: {percentage:.2f}%")
+    # Menghitung persentase setiap status untuk masing-masing jenis plan
+    status_jenis_counts = status_jenis_df.groupby(['Jenis Plan', 'Status']).size().unstack(fill_value=0)
 
-    # Grafik bar persentase status
-    st.bar_chart(status_counts / total_count)
+    # Hitung total per jenis plan
+    total_per_jenis_plan = status_jenis_counts.sum(axis=1)
+
+    # Hitung persentase per status untuk tiap jenis plan
+    status_jenis_percentage = status_jenis_counts.divide(total_per_jenis_plan, axis=0) * 100
+
+    st.write("Persentase Status Berdasarkan Jenis Plan:")
+    st.write(status_jenis_percentage)
+
+    # Grafik bar per status dan jenis plan
+    st.bar_chart(status_jenis_percentage)
