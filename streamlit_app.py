@@ -129,6 +129,8 @@ elif sidebar_option == 'Lihat Data':
 
 
 elif sidebar_option == 'Export Data':
+
+    st.subheader("Download file dalam bentuk excel")
     # Export data ke Excel
     # Buat file Excel menggunakan Pandas dan Openpyxl
     c.execute('SELECT * FROM project_plans')
@@ -144,7 +146,7 @@ elif sidebar_option == 'Export Data':
 
     # Tombol untuk download file Excel
     st.download_button(
-        label="Download Excel",
+        label="Download",
         data=excel_file,
         file_name="project_plans.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
