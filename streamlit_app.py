@@ -37,6 +37,11 @@ def row_color(status):
         return 'background-color: #f44336; color: white;'  # Red
     return ''  # Default
 
+def save_data_to_excel(df):
+    # Pastikan file ditulis dengan benar
+    with pd.ExcelWriter(EXCEL_FILE, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False)
+
 # Upload Excel file
 uploaded_file = st.sidebar.file_uploader("Upload Excel File", type=["xlsx"])
 if uploaded_file:
