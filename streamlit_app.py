@@ -29,7 +29,7 @@ conn.commit()
 
 st.title("Project Plan Management Doyahudin")
 # Menampilkan bulan sekarang dengan nama bulan dalam bold dan ukuran heading
-st.markdown(f"### **Bulan sekarang adalah: {current_month}**")
+st.markdown(f"### **{current_month}**")
 
 
 # Sidebar
