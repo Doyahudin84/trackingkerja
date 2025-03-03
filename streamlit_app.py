@@ -6,6 +6,8 @@ import io
 import openpyxl
 from datetime import datetime
 
+# Mengatur locale ke bahasa Indonesia
+locale.setlocale(locale.LC_TIME, 'id_ID.UTF-8')
 # Mendapatkan bulan sekarang
 current_month = datetime.now().strftime('%B')  # Mengambil nama bulan (misal: "March")
 
