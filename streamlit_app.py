@@ -105,10 +105,19 @@ elif sidebar_option == 'Edit & Hapus Plan':
             
             edit_button = st.button("Simpan Perubahan")
             
-            if edit_button:
+             if edit_button:
+                # Update data dalam dataframe
                 df.loc[df['ID'] == edit_id, ['Judul Plan', 'Kelas', 'Jenis Plan', 'Status', 'Nama Koordinasi']] = \
                     [edit_judul, edit_kelas, edit_jenis_plan, edit_status, edit_nama_koordinasi]
+                
+                # Simpan kembali ke Excel
+                save_data_to_excel(df)
+                
+                # Berikan umpan balik ke user
                 st.success(f"Project plan dengan ID {edit_id} berhasil diperbarui!")
+                
+                # Muat ulang halaman untuk memperbarui data yang ditampilkan
+                st.experimental_rerun()
         else:
             st.error(f"Project plan dengan ID {edit_id} tidak ditemukan!")
     
