@@ -105,7 +105,7 @@ elif sidebar_option == 'Edit & Hapus Plan':
             
             edit_button = st.button("Simpan Perubahan")
             
-             if edit_button:
+            if edit_button:
                 # Update data dalam dataframe
                 df.loc[df['ID'] == edit_id, ['Judul Plan', 'Kelas', 'Jenis Plan', 'Status', 'Nama Koordinasi']] = \
                     [edit_judul, edit_kelas, edit_jenis_plan, edit_status, edit_nama_koordinasi]
