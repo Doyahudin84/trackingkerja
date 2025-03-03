@@ -1,6 +1,6 @@
 streamlit
 pandas
 openpyxl
-matplotlib
-locale
+matplotlib==3.4.3
+#locale
 rich
