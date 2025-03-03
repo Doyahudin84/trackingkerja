@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
-import os
 import io
-import openpyxl
 from datetime import datetime
 
 # Daftar nama bulan dalam bahasa Indonesia
@@ -15,32 +12,16 @@ bulan_indonesia = [
 # Mendapatkan bulan sekarang
 current_month = datetime.now().month  # Mengambil bulan dalam angka (1-12)
 
-
-
-# Membuat koneksi ke database SQLite
-db_path = "project_plans.db"
-conn = sqlite3.connect(db_path)
-c = conn.cursor()
-
-# Membuat tabel jika belum ada
-c.execute('''CREATE TABLE IF NOT EXISTS project_plans (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                judul_plan TEXT,
-                kelas TEXT,
-                jenis_plan TEXT,
-                status TEXT,
-                nama_koordinasi TEXT
-             )''')
-conn.commit()
+# Global variable for storing the dataframe
+df = None
 
 st.title("Project Plan Management Doyahudin")
 # Menampilkan bulan sekarang dengan nama bulan dalam bahasa Indonesia dan bold
 st.markdown(f"### **{bulan_indonesia[current_month - 1]}**")
 
-
 # Sidebar
 st.sidebar.title("Menu")
-sidebar_option = st.sidebar.radio("", [ 'Lihat Data','Tambah Plan', 'Edit & Hapus Plan', 'Export Data',"Dashboard"])
+sidebar_option = st.sidebar.radio("", ['Lihat Data', 'Tambah Plan', 'Edit & Hapus Plan', 'Export Data', "Dashboard"])
 
 # Fungsi untuk menampilkan tabel dengan warna berdasarkan status
 def row_color(status):
@@ -55,6 +36,22 @@ def row_color(status):
     elif status == "Not Yet":
         return 'background-color: #f44336; color: white;'  # Red
     return ''  # Default
+
+# Upload Excel file
+uploaded_file = st.sidebar.file_uploader("Upload Excel File", type=["xlsx"])
+if uploaded_file:
+    # Read the uploaded file into a dataframe
+    df = pd.read_excel(uploaded_file)
+
+# If no file is uploaded, show a message
+if df is None:
+    st.error("Please upload an Excel file to proceed.")
+    st.stop()
+
+# Check the dataframe columns
+if not all(col in df.columns for col in ['ID', 'Judul Plan', 'Kelas', 'Jenis Plan', 'Status', 'Nama Koordinasi']):
+    st.error("Excel file must contain the following columns: 'ID', 'Judul Plan', 'Kelas', 'Jenis Plan', 'Status', 'Nama Koordinasi'.")
+    st.stop()
 
 # Tampilan berdasarkan opsi sidebar yang dipilih
 if sidebar_option == 'Tambah Plan':
@@ -73,47 +70,39 @@ if sidebar_option == 'Tambah Plan':
         submit_button = st.form_submit_button(label="Tambah Plan")
 
         if submit_button:
-            c.execute('''
-                INSERT INTO project_plans (judul_plan, kelas, jenis_plan, status, nama_koordinasi)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (judul, kelas, jenis_plan, status, nama_koordinasi))
-            conn.commit()
+            new_id = df['ID'].max() + 1 if not df.empty else 1
+            new_plan = {
+                'ID': new_id,
+                'Judul Plan': judul,
+                'Kelas': kelas,
+                'Jenis Plan': jenis_plan,
+                'Status': status,
+                'Nama Koordinasi': nama_koordinasi
+            }
+            df = df.append(new_plan, ignore_index=True)
             st.success("Project plan berhasil ditambahkan!")
 
 elif sidebar_option == 'Edit & Hapus Plan':
-    # Edit dan Hapus Project Plan
     st.subheader("Edit atau Hapus Project Plan")
     
     # Edit
     edit_id = st.number_input("Masukkan ID Project Plan yang ingin diedit", min_value=1, step=1)
     if edit_id:
-        c.execute("SELECT * FROM project_plans WHERE id=?", (edit_id,))
-        project_plan = c.fetchone()
+        project_plan = df[df['ID'] == edit_id]
         
-        if project_plan:
-            edit_judul = st.text_input("Judul Plan", value=project_plan[1])
-            edit_kelas = st.text_input("Kelas", value=project_plan[2])  # Menggunakan text_input
-            
-            # Menambahkan pengecekan untuk memastikan nilai status_valid
+        if not project_plan.empty:
+            edit_judul = st.text_input("Judul Plan", value=project_plan['Judul Plan'].iloc[0])
+            edit_kelas = st.text_input("Kelas", value=project_plan['Kelas'].iloc[0])  
             status_options = ['Done', 'Revision', 'OK', 'On Progress', 'Not Yet']
-            status_value = project_plan[4]
-            
-            if status_value not in status_options:
-                status_value = 'Done'
-            
-            edit_status = st.selectbox("Status", status_options, index=status_options.index(status_value))
-            edit_jenis_plan = st.selectbox("Jenis Plan", ['Dev', 'QC'], index=['Dev', 'QC'].index(project_plan[3]))
-            edit_nama_koordinasi = st.text_input("Nama Koordinasi", value=project_plan[5])
+            edit_status = st.selectbox("Status", status_options, index=status_options.index(project_plan['Status'].iloc[0]))
+            edit_jenis_plan = st.selectbox("Jenis Plan", ['Dev', 'QC'], index=['Dev', 'QC'].index(project_plan['Jenis Plan'].iloc[0]))
+            edit_nama_koordinasi = st.text_input("Nama Koordinasi", value=project_plan['Nama Koordinasi'].iloc[0])
             
             edit_button = st.button("Simpan Perubahan")
             
             if edit_button:
-                c.execute('''
-                    UPDATE project_plans 
-                    SET judul_plan = ?, kelas = ?, jenis_plan = ?, status = ?, nama_koordinasi = ?
-                    WHERE id = ?
-                ''', (edit_judul, edit_kelas, edit_jenis_plan, edit_status, edit_nama_koordinasi, edit_id))
-                conn.commit()
+                df.loc[df['ID'] == edit_id, ['Judul Plan', 'Kelas', 'Jenis Plan', 'Status', 'Nama Koordinasi']] = \
+                    [edit_judul, edit_kelas, edit_jenis_plan, edit_status, edit_nama_koordinasi]
                 st.success(f"Project plan dengan ID {edit_id} berhasil diperbarui!")
         else:
             st.error(f"Project plan dengan ID {edit_id} tidak ditemukan!")
@@ -121,73 +110,55 @@ elif sidebar_option == 'Edit & Hapus Plan':
     # Hapus
     delete_id = st.number_input("Masukkan ID Project Plan yang ingin dihapus", min_value=1, step=1)
     if st.button("Hapus Project Plan"):
-        if delete_id:
-            c.execute("DELETE FROM project_plans WHERE id=?", (delete_id,))
-            conn.commit()
+        if delete_id in df['ID'].values:
+            df = df[df['ID'] != delete_id]
             st.success(f"Project plan dengan ID {delete_id} berhasil dihapus!")
         else:
             st.error("ID tidak valid!")
 
 elif sidebar_option == 'Lihat Data':
     # Menampilkan data project plan
-    c.execute('SELECT * FROM project_plans')
-    data_db = c.fetchall()
-    df = pd.DataFrame(data_db, columns=['ID', 'Judul Plan', 'Kelas', 'Jenis Plan', 'Status', 'Nama Koordinasi'])
-
-    # Terapkan warna ke setiap baris berdasarkan status
-    styled_df = df.style.applymap(lambda status: row_color(status), subset=['Status'])
-    
-    # Tampilkan tabel dengan warna
-    st.write(styled_df)
-
-
+    if not df.empty:
+        # Terapkan warna ke setiap baris berdasarkan status
+        styled_df = df.style.applymap(lambda status: row_color(status), subset=['Status'])
+        st.write(styled_df)
+    else:
+        st.error("No data available!")
 
 elif sidebar_option == 'Export Data':
-
     st.subheader("Download file dalam bentuk excel")
     # Export data ke Excel
-    # Buat file Excel menggunakan Pandas dan Openpyxl
-    c.execute('SELECT * FROM project_plans')
-    data_db = c.fetchall()
-    df = pd.DataFrame(data_db, columns=['ID', 'Judul Plan', 'Kelas', 'Jenis Plan', 'Status', 'Nama Koordinasi'])
+    if not df.empty:
+        excel_file = io.BytesIO()
+        with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Project Plans')
 
-    excel_file = io.BytesIO()
-    with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='Project Plans')
+        # Kembalikan pointer file ke awal
+        excel_file.seek(0)
 
-    # Kembalikan pointer file ke awal
-    excel_file.seek(0)
-
-    # Tombol untuk download file Excel
-    st.download_button(
-        label="Download",
-        data=excel_file,
-        file_name="project_plans.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+        # Tombol untuk download file Excel
+        st.download_button(
+            label="Download",
+            data=excel_file,
+            file_name="project_plans.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    else:
+        st.error("No data to export!")
 
 elif sidebar_option == 'Dashboard':
-    # Dashboard Persentase Status dan Jenis Plan
     st.subheader("Dashboard Persentase Status Berdasarkan Jenis Plan")
 
-    # Ambil data dari database
-    c.execute('SELECT status, jenis_plan FROM project_plans')
-    data_db = c.fetchall()
-    
-    # Mengubah data menjadi DataFrame
-    status_jenis_df = pd.DataFrame(data_db, columns=['Status', 'Jenis Plan'])
+    if not df.empty:
+        # Menghitung persentase setiap status untuk masing-masing jenis plan
+        status_jenis_counts = df.groupby(['Jenis Plan', 'Status']).size().unstack(fill_value=0)
+        total_per_jenis_plan = status_jenis_counts.sum(axis=1)
+        status_jenis_percentage = status_jenis_counts.divide(total_per_jenis_plan, axis=0) * 100
 
-    # Menghitung persentase setiap status untuk masing-masing jenis plan
-    status_jenis_counts = status_jenis_df.groupby(['Jenis Plan', 'Status']).size().unstack(fill_value=0)
+        st.write("Persentase Status Berdasarkan Jenis Plan:")
+        st.write(status_jenis_percentage)
 
-    # Hitung total per jenis plan
-    total_per_jenis_plan = status_jenis_counts.sum(axis=1)
-
-    # Hitung persentase per status untuk tiap jenis plan
-    status_jenis_percentage = status_jenis_counts.divide(total_per_jenis_plan, axis=0) * 100
-
-    st.write("Persentase Status Berdasarkan Jenis Plan:")
-    st.write(status_jenis_percentage)
-
-    # Grafik bar per status dan jenis plan
-    st.bar_chart(status_jenis_percentage)
+        # Grafik bar per status dan jenis plan
+        st.bar_chart(status_jenis_percentage)
+    else:
+        st.error("No data available for dashboard!")
