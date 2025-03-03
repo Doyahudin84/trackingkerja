@@ -95,25 +95,29 @@ elif sidebar_option == 'Edit & Hapus Plan':
         
         if not project_plan.empty:
             edit_judul = st.text_input("Judul Plan", value=project_plan['Judul Plan'].values[0])
-            edit_kelas = st.text_input("Kelas", value=project_plan['Kelas'].values[0])  # Menggunakan text_input
+            edit_kelas = st.text_input("Kelas", value=project_plan['Kelas'].values[0])
             
-            # Menambahkan pengecekan untuk memastikan nilai status_valid
-            status_options = ['Done', 'Revision', 'OK', 'On Progress', 'Not Yet']
             status_value = project_plan['Status'].values[0]
-            edit_status = st.selectbox("Status", status_options, index=status_options.index(status_value))
+            edit_status = st.selectbox("Status", ['Done', 'Revision', 'OK', 'On Progress', 'Not Yet'], index=['Done', 'Revision', 'OK', 'On Progress', 'Not Yet'].index(status_value))
             edit_jenis_plan = st.selectbox("Jenis Plan", ['Dev', 'QC'], index=['Dev', 'QC'].index(project_plan['Jenis Plan'].values[0]))
             edit_nama_koordinasi = st.text_input("Nama Koordinasi", value=project_plan['Nama Koordinasi'].values[0])
             
             edit_button = st.button("Simpan Perubahan")
             
             if edit_button:
+                # Update data dalam dataframe
                 df.loc[df['ID'] == edit_id, ['Judul Plan', 'Kelas', 'Jenis Plan', 'Status', 'Nama Koordinasi']] = \
                     [edit_judul, edit_kelas, edit_jenis_plan, edit_status, edit_nama_koordinasi]
+                
+                # Simpan kembali ke Excel
                 save_data_to_excel(df)
+                
+                # Berikan umpan balik ke user
                 st.success(f"Project plan dengan ID {edit_id} berhasil diperbarui!")
-        else:
-            st.error(f"Project plan dengan ID {edit_id} tidak ditemukan!")
-    
+                
+                # Muat ulang halaman untuk memperbarui data yang ditampilkan
+                st.experimental_rerun()  # Ini akan me-refresh tampilan agar data yang baru muncul
+
     # Hapus
     delete_id = st.number_input("Masukkan ID Project Plan yang ingin dihapus", min_value=1, step=1)
     if st.button("Hapus Project Plan"):
@@ -123,10 +127,12 @@ elif sidebar_option == 'Edit & Hapus Plan':
                 df = df[df['ID'] != delete_id]
                 save_data_to_excel(df)
                 st.success(f"Project plan dengan ID {delete_id} berhasil dihapus!")
+                st.experimental_rerun()  # Muat ulang halaman setelah penghapusan
             else:
                 st.error(f"Project plan dengan ID {delete_id} tidak ditemukan!")
         else:
             st.error("ID tidak valid!")
+
 
 elif sidebar_option == 'Lihat Data':
     # Menampilkan data project plan
