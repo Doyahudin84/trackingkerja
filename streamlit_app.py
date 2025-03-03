@@ -6,10 +6,14 @@ import io
 import openpyxl
 from datetime import datetime
 
-# Mengatur locale ke bahasa Indonesia
-locale.setlocale(locale.LC_TIME, 'id_ID.UTF-8')
+# Daftar nama bulan dalam bahasa Indonesia
+bulan_indonesia = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+]
+
 # Mendapatkan bulan sekarang
-current_month = datetime.now().strftime('%B')  # Mengambil nama bulan (misal: "March")
+current_month = datetime.now().month  # Mengambil bulan dalam angka (1-12)
 
 
 
@@ -30,8 +34,8 @@ c.execute('''CREATE TABLE IF NOT EXISTS project_plans (
 conn.commit()
 
 st.title("Project Plan Management Doyahudin")
-# Menampilkan bulan sekarang dengan nama bulan dalam bold dan ukuran heading
-st.markdown(f"### **{current_month}**")
+# Menampilkan bulan sekarang dengan nama bulan dalam bahasa Indonesia dan bold
+st.markdown(f"### **{bulan_indonesia[current_month - 1]}**"
 
 
 # Sidebar
