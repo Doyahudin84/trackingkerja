@@ -4,6 +4,11 @@ import sqlite3
 import os
 import io
 import openpyxl
+from datetime import datetime
+
+# Mendapatkan bulan sekarang
+current_month = datetime.now().strftime('%B')  # Mengambil nama bulan (misal: "March")
+
 
 
 # Membuat koneksi ke database SQLite
@@ -23,6 +28,9 @@ c.execute('''CREATE TABLE IF NOT EXISTS project_plans (
 conn.commit()
 
 st.title("Project Plan Management Doyahudin")
+# Menampilkan bulan sekarang dengan nama bulan dalam bold dan ukuran heading
+st.markdown(f"### **Bulan sekarang adalah: {current_month}**")
+
 
 # Sidebar
 st.sidebar.title("Menu")
